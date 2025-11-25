@@ -259,25 +259,43 @@ def load_adapters(model: nn.Module, adapter_path: str) -> nn.Module:
     return _load_adapters(model, adapter_path)
 
 
-def load_tokenizer(model_path, tokenizer_config_extra=None, eos_token_ids=None):
+def load_tokenizer(
+    model_path,
+    tokenizer_config_extra=None,
+    eos_token_ids=None,
+    original_path_or_hf_repo=None,
+):
     """Load a huggingface tokenizer and try to infer the type of streaming
     detokenizer to use.
     """
-    model_path = _download(
-        model_path,
-        allow_patterns=[
-            "*.json",
-            "*.py",
-            "tokenizer.model",
-            "*.tiktoken",
-            "tiktoken.model",
-            "*.txt",
-            "*.jsonl",
-            "*.jinja",
-        ],
-    )
+    # If model_path is already a Path (downloaded), we can use original_path_or_hf_repo
+    # Otherwise, download it
+    from pathlib import Path
+
+    if isinstance(model_path, Path):
+        # model_path is already downloaded
+        pass
+    else:
+        # Need to download
+        original_path_or_hf_repo = model_path
+        model_path = _download(
+            model_path,
+            allow_patterns=[
+                "*.json",
+                "*.py",
+                "tokenizer.model",
+                "*.tiktoken",
+                "tiktoken.model",
+                "*.txt",
+                "*.jsonl",
+                "*.jinja",
+            ],
+        )
     return _load_tokenizer(
-        model_path, tokenizer_config_extra, eos_token_ids=eos_token_ids
+        model_path,
+        tokenizer_config_extra,
+        eos_token_ids=eos_token_ids,
+        original_model_path=original_path_or_hf_repo,
     )
 
 
@@ -324,7 +342,10 @@ def load(
         model = load_adapters(model, adapter_path)
         model.eval()
     tokenizer = load_tokenizer(
-        model_path, tokenizer_config, eos_token_ids=config.get("eos_token_id", None)
+        model_path,
+        tokenizer_config,
+        eos_token_ids=config.get("eos_token_id", None),
+        original_path_or_hf_repo=path_or_hf_repo,
     )
 
     if return_config:

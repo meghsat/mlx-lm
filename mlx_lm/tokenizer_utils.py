@@ -428,6 +428,7 @@ def load(
     tokenizer_config_extra: Optional[Dict[str, Any]] = None,
     return_tokenizer=True,
     eos_token_ids=None,
+    original_model_path=None,
 ) -> TokenizerWrapper:
     """Load a huggingface tokenizer and try to infer the type of streaming
     detokenizer to use.
@@ -459,8 +460,12 @@ def load(
 
     if return_tokenizer:
         kwargs = tokenizer_config_extra or {}
+        # Use the original HF model path instead of the downloaded local path
+        # to work around a bug in transformers where it fails to load the config
+        # correctly from local paths for certain models
+        tokenizer_path = original_model_path if original_model_path else str(model_path)
         return TokenizerWrapper(
-            AutoTokenizer.from_pretrained(model_path, **kwargs),
+            AutoTokenizer.from_pretrained(tokenizer_path, **kwargs),
             detokenizer_class,
             eos_token_ids=eos_token_ids,
         )
