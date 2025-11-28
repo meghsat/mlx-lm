@@ -17,6 +17,7 @@ dummy_tokens = mx.random.randint(0, vocab_size, (prompt_length,)).tolist()
 
 tokenizer._eos_token_ids = {}
 
+print("\Dummy benchmark:")
 response = generate(
     model, 
     tokenizer, 
